@@ -37,10 +37,11 @@ module.exports = {
         });
 
       const mineralList = inventory.minerals
-        .map(
-          (mineral, index) =>
-            `${index + 1}. ${mineral.name} x${mineral.quantity} (${mineral.quality})`,
-        )
+        .map(async (mineral, index) => {
+          const mineral = await Mineral.findById(mineral.mineralId);
+          const mineralName = mineral.name;
+          return `${index + 1}. ${mineralName} x${mineral.quantity} (${mineral.quality})`;
+        })
         .join("\n");
 
       embed.addFields({

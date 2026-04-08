@@ -20,14 +20,22 @@ module.exports = {
       });
 
       if (userInventory) {
-        userInventory.minerals.map((mineral) => {
-          if (
+        // Check if user already has this mineral with this quality
+        const existingMineral = userInventory.minerals.find(
+          (mineral) =>
             mineral.mineralId == mineralId &&
-            mineral.quality == Number(quality)
-          ) {
-            mineral.quantity = Number(quantity);
-          }
-        });
+            mineral.quality == Number(quality),
+        );
+
+        if (existingMineral) {
+          existingMineral.quantity = Number(quantity);
+        } else {
+          userInventory.minerals.push({
+            mineralId: mineralId,
+            quantity: Number(quantity),
+            quality: Number(quality),
+          });
+        }
 
         await userInventory.save();
 
@@ -37,7 +45,7 @@ module.exports = {
         });
       }
 
-      const inventory = await new Inventory({
+      const inventory = new Inventory({
         discordId: discordId,
         minerals: [],
       });
