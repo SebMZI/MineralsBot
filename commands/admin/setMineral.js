@@ -28,9 +28,17 @@ module.exports = {
 
     try {
       const existingMineral = await Mineral.findOne({ name: mineralName });
-      if (existingMineral) {
+      if (existingMineral && existingMineral.active) {
         return await interaction.followUp({
           content: `The mineral (${mineralName}) already exists`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } else if (existingMineral && !existingMineral.active) {
+        existingMineral.active = true;
+        await existingMineral.save();
+
+        return await interaction.followUp({
+          content: "Mineral has been added to the list",
           flags: MessageFlags.Ephemeral,
         });
       }
