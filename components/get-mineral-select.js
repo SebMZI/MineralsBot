@@ -2,6 +2,18 @@ const { EmbedBuilder } = require("discord.js");
 const Inventory = require("../db/models/inventory.js");
 const Mineral = require("../db/models/mineral.js");
 
+// Helper function to convert quality number to readable name
+function getQualityName(quality) {
+  const qualities = {
+    1: "Common",
+    2: "Uncommon",
+    3: "Rare",
+    4: "Epic",
+    5: "Legendary",
+  };
+  return qualities[quality] || `Quality ${quality || "Unknown"}`;
+}
+
 module.exports = {
   customId: "mineral-get-select",
   async execute(interaction) {
@@ -32,7 +44,7 @@ module.exports = {
         );
         const userMinerals = inventory.minerals
           .filter((m) => m.mineralId == mineralId)
-          .map((m) => `${m.quality} (x${m.quantity})`);
+          .map((m) => `${getQualityName(m.quality)} (x${m.quantity})`);
 
         return {
           name: "\u200b",
