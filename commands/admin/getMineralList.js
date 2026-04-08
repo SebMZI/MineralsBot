@@ -17,7 +17,7 @@ module.exports = {
         .setDescription("Get active or inactive minerals"),
     ),
   async execute(interaction) {
-    const active = interaction.options.getBoolean("isactive");
+    const active = interaction.options.getBoolean("isactive") ?? true;
 
     try {
       const minerals = await Mineral.find({
@@ -38,11 +38,13 @@ module.exports = {
           text: "Made by: Anrazzi",
         });
 
-      minerals.map((mineral, index) => {
-        embed.addFields({
-          name: `${index}.`,
-          value: mineral.name,
-        });
+      const mineralList = minerals
+        .map((mineral, index) => `${index + 1}. ${mineral.name}`)
+        .join("\n");
+
+      embed.addFields({
+        name: "\u200b",
+        value: mineralList,
       });
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {

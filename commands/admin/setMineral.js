@@ -17,7 +17,6 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits?.Administrator),
   async execute(interaction) {
     const mineralName = interaction.options.getString("mineral-name");
-    await interaction.deferReply();
 
     if (!mineralName) {
       return await interaction.reply({

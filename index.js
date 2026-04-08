@@ -27,6 +27,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (!modal) return;
     await modal.execute(interaction);
   }
+
+  if (interaction.isStringSelectMenu()) {
+    const component = interaction.client.components.get(interaction.customId);
+    if (!component) return;
+    await component.execute(interaction);
+  }
 });
 
 client.commands = new Collection();
@@ -50,6 +56,17 @@ for (const folder of commandFolders) {
       );
     }
   }
+}
+
+client.components = new Collection();
+const componentPath = path.join(__dirname, "components");
+const componentFiles = fs
+  .readdirSync(componentPath)
+  .filter((file) => file.endsWith(".js"));
+
+for (const file of componentFiles) {
+  const component = require(path.join(componentPath, file));
+  client.components.set(component.customId, component);
 }
 
 client.modals = new Collection();

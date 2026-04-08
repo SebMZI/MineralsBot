@@ -1,5 +1,5 @@
-const { MessageFlags } = require("discord.js");
 const Inventory = require("../db/models/inventory.js");
+const Mineral = require("../db/models/mineral.js");
 
 module.exports = {
   customId: "mineral-add-modal",
