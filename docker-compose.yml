@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: minerals-bot-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: minerals_bot
+    ports:
+      - "127.0.0.1:27017:27017" # Bind to localhost only for security
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - minerals-bot-network
+
+  bot:
+    build: .
+    container_name: minerals-bot
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/minerals_bot?authSource=admin
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - minerals-bot-network
+    command: ["pnpm", "run", "start"]
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+
+networks:
+  minerals-bot-network:
+    driver: bridge
