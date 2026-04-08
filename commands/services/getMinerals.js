@@ -36,17 +36,17 @@ module.exports = {
           text: "Made by: Anrazzi",
         });
 
-      const mineralList = inventory.minerals
-        .map(async (mineral, index) => {
-          const mineral = await Mineral.findById(mineral.mineralId);
-          const mineralName = mineral.name;
-          return `${index + 1}. ${mineralName} x${mineral.quantity} (${mineral.quality})`;
-        })
-        .join("\n");
+      const mineralList = await Promise.all(
+        inventory.minerals.map(async (item, index) => {
+          const mineralDoc = await Mineral.findById(item.mineralId);
+          const mineralName = mineralDoc ? mineralDoc.name : "Unknown mineral";
+          return `${index + 1}. ${mineralName} x${item.quantity} (${item.quality})`;
+        }),
+      );
 
       embed.addFields({
         name: "\u200b",
-        value: mineralList,
+        value: mineralList.join("\n"),
       });
 
       return await interaction.reply({ embeds: [embed] });
