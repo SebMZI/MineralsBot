@@ -12,29 +12,20 @@ client.once(Events.ClientReady, (c) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  const command = interaction.client.commands.get(interaction.commandName);
-
-  if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
-    return;
+  if (interaction.isChatInputCommand()) {
+    const command = interaction.client.commands.get(interaction.commandName);
+    if (!command) return;
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: "There was an error while executing this command!",
-        flags: MessageFlags.Ephemeral,
-      });
-    } else {
-      await interaction.reply({
-        content: "There was an error while executing this command!",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+  if (interaction.isModalSubmit()) {
+    const modal = interaction.client.modals.get(interaction.customId);
+    if (!modal) return;
+    await modal.execute(interaction);
   }
 });
 
@@ -59,6 +50,17 @@ for (const folder of commandFolders) {
       );
     }
   }
+}
+
+client.modals = new Collection();
+const modalsPath = path.join(__dirname, "modals");
+const modalFiles = fs
+  .readdirSync(modalsPath)
+  .filter((file) => file.endsWith(".js"));
+
+for (const file of modalFiles) {
+  const modal = require(path.join(modalsPath, file));
+  client.modals.set(modal.customId, modal);
 }
 
 client.login(token);

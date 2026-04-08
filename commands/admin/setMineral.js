@@ -20,26 +20,26 @@ module.exports = {
     await interaction.deferReply();
 
     if (!mineralName) {
-      return await interaction.followUp({
+      return await interaction.reply({
         content: "Mineral name is required!",
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
     try {
       const existingMineral = await Mineral.findOne({ name: mineralName });
       if (existingMineral && existingMineral.active) {
-        return await interaction.followUp({
+        return await interaction.reply({
           content: `The mineral (${mineralName}) already exists`,
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       } else if (existingMineral && !existingMineral.active) {
         existingMineral.active = true;
         await existingMineral.save();
 
-        return await interaction.followUp({
+        return await interaction.reply({
           content: "Mineral has been added to the list",
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       }
 
@@ -49,9 +49,9 @@ module.exports = {
 
       await mineral.save();
 
-      return await interaction.followUp({
+      return await interaction.reply({
         content: "Mineral has been added to the list",
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     } catch (error) {
       console.error(error);

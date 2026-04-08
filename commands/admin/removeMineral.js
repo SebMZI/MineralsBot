@@ -4,6 +4,8 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+const Mineral = require("../../db/models/mineral");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("removemineral")
@@ -18,9 +20,9 @@ module.exports = {
     const mineralName = interaction.options.getString("mineral-name");
 
     if (!mineralName) {
-      return await interaction.followUp({
+      return await interaction.reply({
         content: "Mineral name is required",
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -30,17 +32,17 @@ module.exports = {
       });
 
       if (mineral.length == 0) {
-        return await interaction.followUp({
+        return await interaction.reply({
           content: `No mineral found with this name: ${mineralName}`,
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       }
 
       mineral.active = false;
       await mineral.save();
-      return await interaction.followUp({
+      return await interaction.reply({
         content: `Mineral (${mineralName}) has been removed`,
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     } catch (error) {
       console.error(error);
