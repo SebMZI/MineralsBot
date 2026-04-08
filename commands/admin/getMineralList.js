@@ -9,7 +9,7 @@ const Mineral = require("../../db/models/mineral");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("getminerallist")
-    .setDescription("Get the list of minerals")
+    .setDescription("(Admin) Get the list of minerals")
     .setDefaultMemberPermissions(PermissionFlagsBits?.Administrator)
     .addBooleanOption((option) =>
       option

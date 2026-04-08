@@ -9,7 +9,7 @@ const Mineral = require("../../db/models/mineral");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("removemineralfromlist")
-    .setDescription("Remove a mineral from the list of minerals")
+    .setDescription("(Admin) Remove a mineral from the list of minerals")
     .addStringOption((option) =>
       option
         .setName("mineral-name")

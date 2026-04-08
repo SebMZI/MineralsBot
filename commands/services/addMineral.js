@@ -13,7 +13,7 @@ const Mineral = require("../../db/models/mineral");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("addmineral")
-    .setDescription("Add a mineral to your inventory"),
+    .setDescription("(Press Enter) Add a mineral to your inventory"),
   async execute(interaction) {
     const minerals = await Mineral.find({ active: true });
     if (minerals.length === 0) {
