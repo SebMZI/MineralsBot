@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+RUN mkdir -p /app/logs
+
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S discordbot -u 1001 && \
     chown -R discordbot:nodejs /app

@@ -30,7 +30,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-      - ./logs:/app/logs
+      - minerals_logs:/app/logs
     networks:
       - minerals-bot-network
     command: >
@@ -39,6 +39,7 @@ services:
 volumes:
   mongodb_data:
   mongodb_config:
+  minerals_logs:
 
 networks:
   minerals-bot-network:
