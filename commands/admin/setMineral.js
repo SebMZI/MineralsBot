@@ -4,6 +4,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const Mineral = require("../../db/models/mineral");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -36,6 +37,9 @@ module.exports = {
         existingMineral.active = true;
         await existingMineral.save();
 
+        log(
+          `Admin ${interaction.user.username} reactivated mineral: ${mineralName}`,
+        );
         return await interaction.reply({
           content: "Mineral has been added to the list",
           ephemeral: true,
@@ -47,13 +51,16 @@ module.exports = {
       });
 
       await mineral.save();
-
+      log(
+        `Admin ${interaction.user.username} added new mineral: ${mineralName}`,
+      );
       return await interaction.reply({
         content: "Mineral has been added to the list",
         ephemeral: true,
       });
     } catch (error) {
       console.error(error);
+      log(`[ERROR] Failed to set mineral ${mineralName}: ${error.message}`);
     }
   },
 };

@@ -1,13 +1,9 @@
-const {
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  SlashCommandBuilder,
-  ActionRowBuilder,
-} = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 
 const Mineral = require("../../db/models/mineral");
 const Inventory = require("../../db/models/inventory.js");
 const { EmbedBuilder } = require("discord.js");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -36,6 +32,7 @@ module.exports = {
           text: "Made by: Anrazzi",
         });
 
+      console.log(inventory.minerals);
       const mineralList = await Promise.all(
         inventory.minerals.map(async (item, index) => {
           const mineralDoc = await Mineral.findById(item.mineralId);
@@ -49,9 +46,15 @@ module.exports = {
         value: mineralList.join("\n"),
       });
 
+      log(
+        `User ${interaction.user.username} retrieved their mineral inventory`,
+      );
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
+      log(
+        `[ERROR] Failed to get minerals for user ${interaction.user.username}: ${error.message}`,
+      );
     }
   },
 };

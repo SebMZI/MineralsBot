@@ -1,7 +1,9 @@
+require("dotenv").config();
 const { REST, Routes } = require("discord.js");
 const { DISCORD_TOKEN, APPLICATION_ID } = process.env;
 const fs = require("node:fs");
 const path = require("node:path");
+const log = require("./utils/logs.js");
 
 const commands = [];
 const foldersPath = path.join(__dirname, "commands");
@@ -32,6 +34,7 @@ const rest = new REST().setToken(DISCORD_TOKEN);
     console.log(
       `Started refreshing ${commands.length} application (/) commands.`,
     );
+    log(`Started deploying ${commands.length} application commands.`);
 
     const data = await rest.put(Routes.applicationCommands(APPLICATION_ID), {
       body: commands,
@@ -40,7 +43,9 @@ const rest = new REST().setToken(DISCORD_TOKEN);
     console.log(
       `Successfully reloaded ${data.length} application (/) commands.`,
     );
+    log(`Successfully deployed ${data.length} application commands.`);
   } catch (error) {
     console.error(error);
+    log(`[ERROR] Failed to deploy commands: ${error.message}`);
   }
 })();

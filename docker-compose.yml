@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_PASSWORD: password # Idéalement, utilise une variable .env ici
       MONGO_INITDB_DATABASE: minerals_bot
     ports:
       - 27017:27017
@@ -30,9 +30,11 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - ./logs:/app/logs
     networks:
       - minerals-bot-network
-    command: ["sh", "-lc", "pnpm run deploy && pnpm run start"]
+    command: >
+      sh -c "pnpm run deploy && pnpm run start"
 
 volumes:
   mongodb_data:

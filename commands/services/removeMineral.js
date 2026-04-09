@@ -9,6 +9,7 @@ const {
 } = require("discord.js");
 
 const Mineral = require("../../db/models/mineral");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -36,6 +37,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(mineralSelect);
 
+    log(`User ${interaction.user.username} initiated remove mineral select`);
     await interaction.reply({
       content: "Select a mineral",
       components: [row],

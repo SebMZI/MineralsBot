@@ -1,5 +1,6 @@
 const Inventory = require("../db/models/inventory.js");
 const Mineral = require("../db/models/mineral.js");
+const log = require("../utils/logs.js");
 
 module.exports = {
   customId: "mineral-add-modal",
@@ -20,10 +21,9 @@ module.exports = {
       });
 
       if (userInventory) {
-        // Check if user already has this mineral with this quality
         const existingMineral = userInventory.minerals.find(
           (mineral) =>
-            mineral.mineralId == mineralId &&
+            mineral.mineralId.toString() == mineralId &&
             mineral.quality == Number(quality),
         );
 
@@ -39,6 +39,9 @@ module.exports = {
 
         await userInventory.save();
 
+        log(
+          `User ${interaction.user.username} updated mineral ${mineralName}: qty ${quantity}, quality ${quality}`,
+        );
         return await interaction.reply({
           content: `The mineral (${mineralName}) has been updated. Qty: ${quantity}, Qlty: ${quality}`,
           ephemeral: true,
@@ -58,12 +61,18 @@ module.exports = {
 
       await inventory.save();
 
+      log(
+        `User ${interaction.user.username} added new mineral ${mineralName}: qty ${quantity}, quality ${quality}`,
+      );
       return interaction.reply({
         content: `Mineral (${mineralName}) updated to Qty: ${quantity}, Qlty: ${quality}`,
         ephemeral: true,
       });
     } catch (error) {
       console.error(error);
+      log(
+        `[ERROR] Failed to add mineral for user ${interaction.user.username}: ${error.message}`,
+      );
     }
   },
 };

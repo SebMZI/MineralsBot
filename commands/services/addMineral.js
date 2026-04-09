@@ -9,6 +9,7 @@ const {
 } = require("discord.js");
 
 const Mineral = require("../../db/models/mineral");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -66,6 +67,7 @@ module.exports = {
 
     modal.addLabelComponents(mineralLabel, quantityLabel, qualityLabel);
 
+    log(`User ${interaction.user.username} initiated add mineral modal`);
     await interaction.showModal(modal);
   },
 };

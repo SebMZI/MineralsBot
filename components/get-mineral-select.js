@@ -1,18 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const Inventory = require("../db/models/inventory.js");
 const Mineral = require("../db/models/mineral.js");
-
-// Helper function to convert quality number to readable name
-function getQualityName(quality) {
-  const qualities = {
-    1: "Common",
-    2: "Uncommon",
-    3: "Rare",
-    4: "Epic",
-    5: "Legendary",
-  };
-  return qualities[quality] || `Quality ${quality || "Unknown"}`;
-}
+const log = require("../utils/logs.js");
 
 module.exports = {
   customId: "mineral-get-select",
@@ -32,6 +21,9 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x23272a)
       .setTitle("Mineral List")
+      .setDescription(
+        `Mineral: ${await Mineral.findById(mineralId).then((m) => m.name)}`,
+      )
       .setTimestamp()
       .setFooter({
         text: "Made by: Anrazzi",
@@ -44,7 +36,7 @@ module.exports = {
         );
         const userMinerals = inventory.minerals
           .filter((m) => m.mineralId == mineralId)
-          .map((m) => `${getQualityName(m.quality)} (x${m.quantity})`);
+          .map((m) => `x${m.quantity} (${m.quality})`);
 
         return {
           name: "\u200b",
@@ -53,6 +45,9 @@ module.exports = {
       }),
     ).then((fields) => embed.addFields(fields));
 
+    log(
+      `User ${interaction.user.username} searched for mineral: ${await Mineral.findById(mineralId).then((m) => m.name)}`,
+    );
     return await interaction.reply({ embeds: [embed] });
   },
 };

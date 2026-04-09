@@ -5,6 +5,7 @@ const {
 } = require("discord.js");
 
 const Mineral = require("../../db/models/mineral");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -40,12 +41,16 @@ module.exports = {
 
       mineral.active = false;
       await mineral.save();
+      log(
+        `Admin ${interaction.user.username} removed mineral from list: ${mineralName}`,
+      );
       return await interaction.reply({
         content: `Mineral (${mineralName}) has been removed`,
         ephemeral: true,
       });
     } catch (error) {
       console.error(error);
+      log(`[ERROR] Failed to remove mineral ${mineralName}: ${error.message}`);
     }
   },
 };

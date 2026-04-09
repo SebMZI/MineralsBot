@@ -1,7 +1,10 @@
+require("dotenv").config();
+
 const fs = require("fs");
 const path = require("path");
 const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
-const { connectToDatabase } = require("./db/dbConnect");
+const { connectToDatabase } = require("./db/dbConnect.js");
+const log = require("./utils/logs.js");
 const token = process.env.DISCORD_TOKEN;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -9,6 +12,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.once(Events.ClientReady, (c) => {
   connectToDatabase();
   console.log("Minerals Bot is running!");
+  log("Minerals Bot has started successfully.");
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -17,21 +21,47 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (!command) return;
     try {
       await command.execute(interaction);
+      log(
+        `Command executed: ${interaction.commandName} by ${interaction.user.username}`,
+      );
     } catch (error) {
       console.error(error);
+      log(
+        `[ERROR] Failed to execute command ${interaction.commandName}: ${error.message}`,
+      );
     }
   }
 
   if (interaction.isModalSubmit()) {
     const modal = interaction.client.modals.get(interaction.customId);
     if (!modal) return;
-    await modal.execute(interaction);
+    try {
+      await modal.execute(interaction);
+      log(
+        `Modal submitted: ${interaction.customId} by ${interaction.user.username}`,
+      );
+    } catch (error) {
+      console.error(error);
+      log(
+        `[ERROR] Failed to execute modal ${interaction.customId}: ${error.message}`,
+      );
+    }
   }
 
   if (interaction.isStringSelectMenu()) {
     const component = interaction.client.components.get(interaction.customId);
     if (!component) return;
-    await component.execute(interaction);
+    try {
+      await component.execute(interaction);
+      log(
+        `Component selected: ${interaction.customId} by ${interaction.user.username}`,
+      );
+    } catch (error) {
+      console.error(error);
+      log(
+        `[ERROR] Failed to execute command ${interaction.customId}: ${error.message}`,
+      );
+    }
   }
 });
 

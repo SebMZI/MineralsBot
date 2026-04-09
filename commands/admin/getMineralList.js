@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require("discord.js");
 const Mineral = require("../../db/models/mineral");
+const log = require("../../utils/logs.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -46,9 +47,13 @@ module.exports = {
         name: "\u200b",
         value: mineralList,
       });
+      log(
+        `Admin ${interaction.user.username} retrieved mineral list (active: ${active})`,
+      );
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
+      log(`[ERROR] Failed to get mineral list: ${error.message}`);
     }
   },
 };

@@ -1,4 +1,5 @@
 const Inventory = require("../db/models/inventory.js");
+const log = require("../utils/logs.js");
 
 module.exports = {
   customId: "mineral-remove-select",
@@ -26,12 +27,16 @@ module.exports = {
       });
 
       await inventory.save();
+      log(`User ${interaction.user.username} removed mineral from inventory`);
       return await interaction.reply({
         content: `Mineral removed from your inventory`,
         ephemeral: true,
       });
     } catch (error) {
       console.error(error);
+      log(
+        `[ERROR] Failed to remove mineral for user ${interaction.user.username}: ${error.message}`,
+      );
     }
   },
 };
