@@ -52,27 +52,54 @@ module.exports = {
 
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 5 * 60_000 });
 
-    collector.on("collect", async selectInteraction => {
+    collector.on("collect", async (selectInteraction) => {
       const mineralId = selectInteraction.values[0];
+
       const mineral = await Mineral.findById(mineralId);
-      if (!mineral) return selectInteraction.reply({ content: "Mineral not found.", ephemeral: true });
 
-      const inventories = await Inventory.find({ "minerals.mineralId": mineralId });
-      if (!inventories.length) return selectInteraction.reply({ content: "Nobody owns this mineral.", ephemeral: true });
+      if (!mineral) {
+        return selectInteraction.reply({
+          content: "Mineral not found.",
+          ephemeral: true,
+        });
+      }
 
+      const inventories = await Inventory.find({
+        "minerals.mineralId": mineralId,
+      });
 
-      const description = inventories.map(inv => {
-        let initString = `• ${interaction.guild.members.cache.get(inv.discordId)}`
-        for(const min of inv.minerals) {
-          initString += ` - x${min.quantity} (${min.quality})`
-        }
-      }).join("\n");
+      if (!inventories.length) {
+        return selectInteraction.reply({
+          content: "Nobody owns this mineral.",
+          ephemeral: true,
+        });
+      }
+
+      const description = inventories
+          .map((inv) => {
+            const member = interaction.guild.members.cache.get(inv.discordId);
+            const username = member ? member.user.username : inv.discordId;
+
+            const matchingMinerals = inv.minerals.filter(
+                (min) => min.mineralId.toString() === mineralId
+            );
+
+            const mineralLines = matchingMinerals
+                .map((min) => `x${min.quantity} (${min.quality})`)
+                .join(", ");
+
+            return `• ${username} - ${mineralLines}`;
+          })
+          .join("\n");
 
       const embed = new EmbedBuilder()
           .setTitle(`Owners of ${mineral.name}`)
-          .setDescription(description);
+          .setDescription(description || "Nobody owns this mineral.");
 
-      await selectInteraction.reply({ embeds: [embed], ephemeral: true });
+      await selectInteraction.reply({
+        embeds: [embed],
+        ephemeral: true,
+      });
     });
   }
 };
