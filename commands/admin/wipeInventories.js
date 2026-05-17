@@ -21,7 +21,7 @@ module.exports = {
 
             await Inventory.deleteMany()
 
-            await log(`[DELETE] Deleted player's inventory`);
+            await log(`[DELETE] ${interaction.user.username} deleted player's inventory`);
             return await interaction.reply({
                 content: "All inventories have been deleted",
                 ephemeral: true,
