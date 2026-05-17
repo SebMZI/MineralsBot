@@ -1,113 +1,99 @@
+// index.js
 require("dotenv").config();
-
+const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { Database } = require("@discordx/pagination"); // juste pour la pagination si besoin
 const fs = require("fs");
 const path = require("path");
-const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
 const { connectToDatabase } = require("./db/dbConnect.js");
 const log = require("./utils/logs.js");
-const token = process.env.DISCORD_TOKEN;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds],
+});
 
-client.once(Events.ClientReady, (c) => {
-  connectToDatabase();
+// COLLECTIONS
+client.commands = new Collection();
+client.components = new Collection();
+client.modals = new Collection();
+
+// Connect DB & start bot
+client.once("ready", async () => {
+  await connectToDatabase();
   console.log("Minerals Bot is running!");
   log("Minerals Bot has started successfully.");
 });
 
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-    const command = interaction.client.commands.get(interaction.commandName);
-    if (!command) return;
-    try {
+// Load commands
+const commandsPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(commandsPath);
+for (const folder of commandFolders) {
+  const folderPath = path.join(commandsPath, folder);
+  const commandFiles = fs.readdirSync(folderPath).filter(f => f.endsWith(".js"));
+  for (const file of commandFiles) {
+    const filePath = path.join(folderPath, file);
+    const command = require(filePath);
+    if (command.data && command.execute) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(`[WARNING] Command ${filePath} missing data or execute.`);
+    }
+  }
+}
+
+// Load components
+const componentsPath = path.join(__dirname, "components");
+if (fs.existsSync(componentsPath)) {
+  const componentFiles = fs.readdirSync(componentsPath).filter(f => f.endsWith(".js"));
+  for (const file of componentFiles) {
+    const component = require(path.join(componentsPath, file));
+    if (component.customId && component.execute) {
+      client.components.set(component.customId, component);
+    }
+  }
+}
+
+// Load modals
+const modalsPath = path.join(__dirname, "modals");
+if (fs.existsSync(modalsPath)) {
+  const modalFiles = fs.readdirSync(modalsPath).filter(f => f.endsWith(".js"));
+  for (const file of modalFiles) {
+    const modal = require(path.join(modalsPath, file));
+    if (modal.customId && modal.execute) {
+      client.modals.set(modal.customId, modal);
+    }
+  }
+}
+
+// Handle interactions
+client.on("interactionCreate", async (interaction) => {
+  try {
+    if (interaction.isChatInputCommand()) {
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
       await command.execute(interaction);
-      log(
-        `Command executed: ${interaction.commandName} by ${interaction.user.username}`,
-      );
-    } catch (error) {
-      console.error(error);
-      log(
-        `[ERROR] Failed to execute command ${interaction.commandName}: ${error.message}`,
-      );
+      await log(`Command executed: ${interaction.commandName} by ${interaction.user.username}`);
     }
-  }
 
-  if (interaction.isModalSubmit()) {
-    const modal = interaction.client.modals.get(interaction.customId);
-    if (!modal) return;
-    try {
+    if (interaction.isModalSubmit()) {
+      const modal = client.modals.get(interaction.customId);
+      if (!modal) return;
       await modal.execute(interaction);
-      log(
-        `Modal submitted: ${interaction.customId} by ${interaction.user.username}`,
-      );
-    } catch (error) {
-      console.error(error);
-      log(
-        `[ERROR] Failed to execute modal ${interaction.customId}: ${error.message}`,
-      );
+      await log(`Modal submitted: ${interaction.customId} by ${interaction.user.username}`);
     }
-  }
 
-  if (interaction.isStringSelectMenu()) {
-    const component = interaction.client.components.get(interaction.customId);
-    if (!component) return;
-    try {
+    if (interaction.isStringSelectMenu() || interaction.isButton()) {
+      const component = client.components.get(interaction.customId);
+      if (!component) return;
       await component.execute(interaction);
-      log(
-        `Component selected: ${interaction.customId} by ${interaction.user.username}`,
-      );
-    } catch (error) {
-      console.error(error);
-      log(
-        `[ERROR] Failed to execute command ${interaction.customId}: ${error.message}`,
-      );
+      await log(`Component selected: ${interaction.customId} by ${interaction.user.username}`);
     }
+  } catch (err) {
+    console.error(err);
+    if (!interaction.replied) {
+      await interaction.reply({ content: "An error occurred.", ephemeral: true });
+    }
+    await log(`[ERROR] Interaction error: ${err.message}`);
   }
 });
 
-client.commands = new Collection();
-const foldersPath = path.join(__dirname, "commands");
-const commandFolders = fs.readdirSync(foldersPath);
-
-for (const folder of commandFolders) {
-  const commandsPath = path.join(foldersPath, folder);
-  const commandFiles = fs
-    .readdirSync(commandsPath)
-    .filter((file) => file.endsWith(".js"));
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-
-    if ("data" in command && "execute" in command) {
-      client.commands.set(command.data.name, command);
-    } else {
-      console.log(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
-      );
-    }
-  }
-}
-
-//  COMPONENTS
-client.components = new Collection();
-const componentPath = path.join(__dirname, "components");
-const componentFiles = fs.readdirSync(componentPath).filter(f => f.endsWith(".js"));
-for (const file of componentFiles) {
-  const component = require(path.join(componentPath, file));
-  client.components.set(component.customId, component);
-}
-
-
-// MODALS
-client.modals = new Collection();
-const modalsPath = path.join(__dirname, "modals");
-const modalFiles = fs
-  .readdirSync(modalsPath)
-  .filter((file) => file.endsWith(".js"));
-
-for (const file of modalFiles) {
-  const modal = require(path.join(modalsPath, file));
-  client.modals.set(modal.customId, modal);
-}
-
-client.login(token);
+client.login(process.env.DISCORD_TOKEN);

@@ -1,41 +1,33 @@
-import { Discord, Slash } from "discordx";
-import { CommandInteraction, ButtonStyle, EmbedBuilder } from "discord.js";
-import { Pagination } from "@discordx/pagination";
-import Mineral from "../../db/models/mineral.js";
+// commands/findMineral.js
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { Pagination } = require("@discordx/pagination");
+const Mineral = require("../../db/models/mineral.js");
 
-@Discord()
-export class FindMineral {
-  @Slash({ name: "findmineral", description: "Find who has the mineral you are looking for." })
-  async find(interaction) {
-    const minerals = await Mineral.find({ active: true }).populate("owners.user");
+module.exports = {
+  data: new SlashCommandBuilder()
+      .setName("findmineral")
+      .setDescription("Find who has the mineral you are looking for."),
+
+  async execute(interaction) {
+    const minerals = await Mineral.find({ active: true });
     if (!minerals.length) {
-      await interaction.reply({ content: "No minerals in the list.", ephemeral: true });
-      return;
+      return interaction.reply({ content: "No minerals in the list.", ephemeral: true });
     }
 
-    const pages = minerals.map((m) => {
-      const ownersText = m.owners?.length
-          ? m.owners.map(o => `${o.user.username}: ${o.amount}`).join("\n")
-          : "No owners";
-      return {
-        embeds: [
-          new EmbedBuilder()
-              .setTitle(m.name)
-              .setDescription(`Mineral ID: ${m._id}`)
-              .addFields({ name: "Owners", value: ownersText })
-        ],
-      };
-    });
+    // Crée les pages pour la pagination
+    const pages = minerals.map((m) => ({
+      embeds: [new EmbedBuilder().setTitle(m.name).setDescription(`Mineral ID: ${m._id}`)],
+    }));
 
-
+    // Pagination avec DiscordX Pagination
     const pagination = new Pagination(interaction, pages, {
       time: 5 * 60_000, // 5 minutes
       buttons: {
-        backward: { style: ButtonStyle.Secondary, label: "⬅ Prev" },
-        forward: { style: ButtonStyle.Secondary, label: "Next ➡" },
+        backward: { style: 2, label: "⬅ Prev" },
+        forward: { style: 2, label: "Next ➡" },
       },
     });
 
     await pagination.send();
-  }
-}
+  },
+};
