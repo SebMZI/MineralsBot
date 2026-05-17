@@ -9,51 +9,63 @@ module.exports = {
     customId: "mineral-page",
 
     async execute(interaction) {
-        const session = interaction.client.mineralPages?.get(interaction.user.id);
+        try {
+            const session = interaction.client.mineralPages?.get(interaction.user.id);
 
-        if (!session || session.expires < Date.now()) {
-            return interaction.reply({
-                content: "Session expired. Run /findmineral again.",
-                ephemeral: true,
-            });
-        }
+            if (!session || session.expires < Date.now()) {
+                return interaction.reply({
+                    content: "Session expired. Run /findmineral again.",
+                    ephemeral: true,
+                });
+            }
 
-        let [, action, pageStr] = interaction.customId.split("-");
-        let page = parseInt(pageStr);
+            // Parse page and action safely
+            const custom = interaction.customId;
+            let page = parseInt(custom.split("-").pop());
+            let action = custom.includes("next") ? "next" : custom.includes("prev") ? "prev" : null;
 
-        const pages = session.pages;
+            if (action === "next") page++;
+            if (action === "prev") page--;
 
-        // Clamp page to valid range
-        page = Math.max(0, Math.min(page, pages.length - 1));
+            const pages = session.pages;
 
-        const current = pages[page];
+            // Clamp page
+            page = Math.max(0, Math.min(page, pages.length - 1));
 
-        const menu = new StringSelectMenuBuilder()
-            .setCustomId(`mineral-page-${page}`)
-            .setPlaceholder(`Select mineral (Page ${page + 1}/${pages.length})`)
-            .addOptions(
-                current.map((m) => ({
-                    label: m.name,
-                    value: m._id.toString(),
-                }))
+            const current = pages[page];
+
+            // Build menu
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId(`mineral-page-${page}`)
+                .setPlaceholder(`Select mineral (Page ${page + 1}/${pages.length})`)
+                .addOptions(
+                    current.map((m) => ({
+                        label: m.name,
+                        value: m._id.toString(),
+                    }))
+                );
+
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`mineral-prev-${page}`)
+                    .setLabel("⬅ Prev")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(page === 0),
+
+                new ButtonBuilder()
+                    .setCustomId(`mineral-next-${page}`)
+                    .setLabel("Next ➡")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(page === pages.length - 1)
             );
 
-        const buttons = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`mineral-prev-${page}`)
-                .setLabel("⬅ Prev")
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(page === 0),
-
-            new ButtonBuilder()
-                .setCustomId(`mineral-next-${page}`)
-                .setLabel("Next ➡")
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(page === pages.length - 1)
-        );
-
-        await interaction.update({
-            components: [new ActionRowBuilder().addComponents(menu), buttons],
-        });
+            await interaction.update({
+                components: [new ActionRowBuilder().addComponents(menu), buttons],
+            });
+        } catch (err) {
+            console.error(err);
+            if (!interaction.replied)
+                await interaction.reply({ content: "Something went wrong.", ephemeral: true });
+        }
     },
 };
