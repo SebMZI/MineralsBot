@@ -3,34 +3,34 @@ const {
     PermissionFlagsBits,
     MessageFlags,
 } = require("discord.js");
-const Mineral = require("../../db/models/mineral");
+const Inventory = require("../../db/models/inventory");
 const log = require("../../utils/logs.js");
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("wipeminerals")
-        .setDescription("(Admin) Wipe all minerals from players")
+        .setName("wipeinventory")
+        .setDescription("(Admin) Wipe all player's inventory")
         .setDefaultMemberPermissions(PermissionFlagsBits?.Administrator),
     async execute(interaction) {
         try {
-            const minerals = await Mineral.find();
-            if(!minerals || minerals?.length === 0) return await interaction.reply({
-                content: "No player's minerals to delete",
+            const inventories = await Inventory.find();
+            if(!inventories || inventories?.length === 0) return await interaction.reply({
+                content: "No player's inventory to delete",
                 ephemeral: true,
             });
 
-            await Mineral.deleteMany()
+            await Inventory.deleteMany()
 
             return await interaction.reply({
-                content: "All minerals has been deleted",
+                content: "All inventory has been deleted",
                 ephemeral: true,
             });
 
         } catch (error) {
             console.error(error);
-            log(`[ERROR] Failed to wipe minerals: ${error.message}`);
+            log(`[ERROR] Failed to wipe inventories: ${error.message}`);
             return await interaction.reply({
-                content: "Failed to wipe minerals",
+                content: "Failed to wipe inventories",
                 ephemeral: true,
             });
         }
