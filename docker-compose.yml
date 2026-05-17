@@ -30,7 +30,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-      - minerals_logs:/app/logs
+      - ./logs:/app/logs
     networks:
       - minerals-bot-network
     command: >
