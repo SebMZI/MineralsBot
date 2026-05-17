@@ -41,7 +41,7 @@ module.exports = {
 
       mineral.active = false;
       await mineral.save();
-      log(
+      await log(
         `Admin ${interaction.user.username} removed mineral from list: ${mineralName}`,
       );
       return await interaction.reply({
@@ -50,7 +50,7 @@ module.exports = {
       });
     } catch (error) {
       console.error(error);
-      log(`[ERROR] Failed to remove mineral ${mineralName}: ${error.message}`);
+      await log(`[ERROR] Failed to remove mineral ${mineralName}: ${error.message}`);
     }
   },
 };

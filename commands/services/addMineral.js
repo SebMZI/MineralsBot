@@ -67,7 +67,7 @@ module.exports = {
 
     modal.addLabelComponents(mineralLabel, quantityLabel, qualityLabel);
 
-    log(`User ${interaction.user.username} initiated add mineral modal`);
+    await log(`User ${interaction.user.username} initiated add mineral modal`);
     await interaction.showModal(modal);
   },
 };

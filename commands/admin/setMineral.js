@@ -37,7 +37,7 @@ module.exports = {
         existingMineral.active = true;
         await existingMineral.save();
 
-        log(
+        await log(
           `Admin ${interaction.user.username} reactivated mineral: ${mineralName}`,
         );
         return await interaction.reply({
@@ -51,7 +51,7 @@ module.exports = {
       });
 
       await mineral.save();
-      log(
+      await log(
         `Admin ${interaction.user.username} added new mineral: ${mineralName}`,
       );
       return await interaction.reply({
@@ -60,7 +60,7 @@ module.exports = {
       });
     } catch (error) {
       console.error(error);
-      log(`[ERROR] Failed to set mineral ${mineralName}: ${error.message}`);
+      await log(`[ERROR] Failed to set mineral ${mineralName}: ${error.message}`);
     }
   },
 };

@@ -47,13 +47,13 @@ module.exports = {
         name: "\u200b",
         value: mineralList,
       });
-      log(
+      await log(
         `Admin ${interaction.user.username} retrieved mineral list (active: ${active})`,
       );
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      log(`[ERROR] Failed to get mineral list: ${error.message}`);
+      await log(`[ERROR] Failed to get mineral list: ${error.message}`);
     }
   },
 };

@@ -37,7 +37,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(mineralSelect);
 
-    log(`User ${interaction.user.username} initiated remove mineral select`);
+    await log(`User ${interaction.user.username} initiated remove mineral select`);
     await interaction.reply({
       content: "Select a mineral",
       components: [row],

@@ -46,13 +46,13 @@ module.exports = {
         value: mineralList.join("\n"),
       });
 
-      log(
+      await log(
         `User ${interaction.user.username} retrieved their mineral inventory`,
       );
       return await interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      log(
+      await log(
         `[ERROR] Failed to get minerals for user ${interaction.user.username}: ${error.message}`,
       );
     }

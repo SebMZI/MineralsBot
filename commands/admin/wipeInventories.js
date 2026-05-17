@@ -21,6 +21,7 @@ module.exports = {
 
             await Inventory.deleteMany()
 
+            await log(`[DELETE] Deleted player's inventory`);
             return await interaction.reply({
                 content: "All inventories have been deleted",
                 ephemeral: true,
@@ -28,7 +29,7 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            log(`[ERROR] Failed to wipe inventories: ${error.message}`);
+            await log(`[ERROR] Failed to wipe inventories: ${error.message}`);
             return await interaction.reply({
                 content: "Failed to wipe inventories",
                 ephemeral: true,
