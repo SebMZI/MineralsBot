@@ -1,9 +1,11 @@
 const {
   SlashCommandBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
   ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
+
 const Mineral = require("../../db/models/mineral");
 const log = require("../../utils/logs.js");
 
@@ -15,41 +17,61 @@ module.exports = {
   async execute(interaction) {
     try {
       const minerals = await Mineral.find({ active: true });
-      if (minerals.length === 0) {
-        return await interaction.reply({
+
+      if (!minerals.length)
+        return interaction.reply({
           content: "No minerals in the list.",
           ephemeral: true,
         });
+
+      // split into pages of 25
+      const pages = [];
+      for (let i = 0; i < minerals.length; i += 25) {
+        pages.push(minerals.slice(i, i + 25));
       }
 
-      // Discord only allows 25 options per select menu
-      const chunkArray = (arr, size) => {
-        const chunks = [];
-        for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-        return chunks;
-      };
+      const buildMenu = (page) =>
+          new StringSelectMenuBuilder()
+              .setCustomId(`mineral-page-${page}`)
+              .setPlaceholder(`Select mineral (Page ${page + 1}/${pages.length})`)
+              .addOptions(
+                  pages[page].map((m) => ({
+                    label: m.name,
+                    value: m._id.toString(),
+                  }))
+              );
 
-      const mineralChunks = chunkArray(minerals, 25);
+      const buildButtons = (page) =>
+          new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                  .setCustomId(`mineral-prev-${page}`)
+                  .setLabel("⬅ Prev")
+                  .setStyle(ButtonStyle.Secondary)
+                  .setDisabled(page === 0),
 
-      const rows = mineralChunks.map((chunk, index) => {
-        const menu = new StringSelectMenuBuilder()
-            .setCustomId(`mineral-get-select-${index}`)
-            .setPlaceholder("Select mineral")
-            .addOptions(
-                chunk.map((mineral) => ({
-                  label: mineral.name,
-                  value: mineral._id.toString(),
-                }))
-            );
-        return new ActionRowBuilder().addComponents(menu);
+              new ButtonBuilder()
+                  .setCustomId(`mineral-next-${page}`)
+                  .setLabel("Next ➡")
+                  .setStyle(ButtonStyle.Secondary)
+                  .setDisabled(page === pages.length - 1)
+          );
+
+      const page = 0;
+
+      // Store pages in memory with expiration (5 min)
+      interaction.client.mineralPages ??= new Map();
+      interaction.client.mineralPages.set(interaction.user.id, {
+        pages,
+        expires: Date.now() + 5 * 60 * 1000,
       });
 
-      await log(`User ${interaction.user.username} initiated find mineral select`);
+      await log(`User ${interaction.user.username} opened mineral finder`);
+
       await interaction.reply({
-        content: "Select a mineral",
-        components: rows,
+        content: "Select a mineral:",
+        ephemeral: true, // <-- ephemeral ensures only the user sees it
+        components: [new ActionRowBuilder().addComponents(buildMenu(page)), buildButtons(page)],
       });
-
     } catch (e) {
       console.error(e);
       await log(`Error in /findmineral: ${e.message}`).catch(console.error);

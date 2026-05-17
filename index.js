@@ -89,14 +89,13 @@ for (const folder of commandFolders) {
 }
 
 client.components = new Collection();
+
 const componentPath = path.join(__dirname, "components");
-const componentFiles = fs
-  .readdirSync(componentPath)
-  .filter((file) => file.endsWith(".js"));
+const componentFiles = fs.readdirSync(componentPath).filter(f => f.endsWith(".js"));
 
 for (const file of componentFiles) {
   const component = require(path.join(componentPath, file));
-  client.components.set(component.customId, component);
+  client.components.set(component.customId, component); // correct
 }
 
 client.modals = new Collection();
