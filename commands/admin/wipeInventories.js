@@ -8,7 +8,7 @@ const log = require("../../utils/logs.js");
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("wipeinventory")
+        .setName("wipeinventories")
         .setDescription("(Admin) Wipe all player's inventory")
         .setDefaultMemberPermissions(PermissionFlagsBits?.Administrator),
     async execute(interaction) {
@@ -22,7 +22,7 @@ module.exports = {
             await Inventory.deleteMany()
 
             return await interaction.reply({
-                content: "All inventory has been deleted",
+                content: "All inventories have been deleted",
                 ephemeral: true,
             });
 

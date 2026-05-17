@@ -7,7 +7,7 @@ const inventorySchema = new mongoose.Schema({
   },
   minerals: [
     {
-      mineralId: { type: mongoose.Schema.Types.ObjectId, ref: "Mineral" },
+      mineralId: { type: mongoose.Schema.Types.ObjectId, ref: "Mineral"},
       quantity: { type: Number, default: 0 },
       quality: { type: Number, default: 0 },
     },
