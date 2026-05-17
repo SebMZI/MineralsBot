@@ -1,7 +1,7 @@
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder, ButtonStyle } = require("discord.js");
 const { Pagination } = require("@discordx/pagination");
 const Mineral = require("../../db/models/mineral.js");
-const UserMineral = require("../../db/models/userMineral.js"); // modèle qui relie utilisateur et minéral
+const Inventory = require("../../db/models/inventory.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,7 +20,7 @@ module.exports = {
     const pages = [];
     for (let i = 0; i < minerals.length; i += pageSize) {
       const pageMinerals = minerals.slice(i, i + pageSize);
-      // Transforme en select menu + embed pour DiscordX Pagination
+
       const menu = new StringSelectMenuBuilder()
           .setCustomId("mineral-select")
           .setPlaceholder(`Select a mineral (Page ${Math.floor(i / pageSize) + 1}/${Math.ceil(minerals.length / pageSize)})`)
@@ -39,7 +39,7 @@ module.exports = {
 
     // Crée la pagination
     const pagination = new Pagination(interaction, pages, {
-      time: 5 * 60_000, // 5 minutes
+      time: 5 * 60_000,
       buttons: {
         backward: { style: ButtonStyle.Secondary, label: "⬅ Prev" },
         forward: { style: ButtonStyle.Secondary, label: "Next ➡" },
@@ -49,22 +49,31 @@ module.exports = {
     await pagination.send();
 
     // Écoute les selects sur cette interaction
-    interaction.client.on("interactionCreate", async selectInteraction => {
-      if (!selectInteraction.isStringSelectMenu()) return;
-      if (selectInteraction.customId !== "mineral-select") return;
-      if (selectInteraction.user.id !== interaction.user.id) {
-        return selectInteraction.reply({ content: "This menu is not for you.", ephemeral: true });
-      }
+    const filter = selectInteraction =>
+        selectInteraction.isStringSelectMenu() &&
+        selectInteraction.customId === "mineral-select" &&
+        selectInteraction.user.id === interaction.user.id;
 
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 5 * 60_000 });
+
+    collector.on("collect", async selectInteraction => {
       const mineralId = selectInteraction.values[0];
       const mineral = await Mineral.findById(mineralId);
       if (!mineral) return selectInteraction.reply({ content: "Mineral not found.", ephemeral: true });
 
-      // Cherche qui possède ce minéral
-      const owners = await UserMineral.find({ mineral: mineralId }).populate("user");
-      if (!owners.length) return selectInteraction.reply({ content: "Nobody owns this mineral.", ephemeral: true });
+      // Cherche qui possède ce minéral dans l'inventaire
+      const inventories = await Inventory.find({ "minerals.mineralId": mineralId });
+      if (!inventories.length) return selectInteraction.reply({ content: "Nobody owns this mineral.", ephemeral: true });
 
-      const description = owners.map(o => `• ${o.user.username}`).join("\n");
+      // Récupère les discordIds
+      const ownersIds = inventories.map(inv => inv.discordId);
+      const ownersNames = ownersIds.map(id => {
+        const member = interaction.guild.members.cache.get(id);
+        return member ? member.user.username : id; // fallback sur id si pas en cache
+      });
+
+      const description = ownersNames.map(name => `• ${name}`).join("\n");
+
       const embed = new EmbedBuilder()
           .setTitle(`Owners of ${mineral.name}`)
           .setDescription(description);
