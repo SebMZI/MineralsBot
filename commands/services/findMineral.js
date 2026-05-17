@@ -23,16 +23,16 @@ module.exports = {
         pages.push(minerals.slice(i, i + 25));
       }
 
-      // Store pages in memory with expiration (5 min)
+      // Store in memory
       interaction.client.mineralPages ??= new Map();
       interaction.client.mineralPages.set(interaction.user.id, {
         pages,
         currentPage: 0,
-        expires: Date.now() + 5 * 60 * 1000,
+        expires: Date.now() + 5 * 60 * 1000 // 5 min
       });
 
+      // Build first menu
       const current = pages[0];
-
       const menu = new StringSelectMenuBuilder()
           .setCustomId("mineral-select")
           .setPlaceholder(`Select mineral (Page 1/${pages.length})`)
@@ -43,24 +43,24 @@ module.exports = {
 
       const buttons = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-              .setCustomId("mineral-select-prev")
+              .setCustomId("mineral-prev")
               .setLabel("⬅ Prev")
               .setStyle(ButtonStyle.Secondary)
               .setDisabled(true),
           new ButtonBuilder()
-              .setCustomId("mineral-select-next")
+              .setCustomId("mineral-next")
               .setLabel("Next ➡")
               .setStyle(ButtonStyle.Secondary)
               .setDisabled(pages.length <= 1)
       );
 
       await log(`User ${interaction.user.username} opened mineral finder`);
+
       await interaction.reply({
         content: "Select a mineral:",
         ephemeral: true,
         components: [new ActionRowBuilder().addComponents(menu), buttons]
       });
-
     } catch (e) {
       console.error(e);
       await log(`Error in /findmineral: ${e.message}`).catch(console.error);
@@ -68,5 +68,5 @@ module.exports = {
         await interaction.reply({ content: "An error occurred.", ephemeral: true });
       }
     }
-  },
+  }
 };

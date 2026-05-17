@@ -12,49 +12,49 @@ module.exports = {
         });
       }
 
-      let page = session.currentPage;
+      let { currentPage, pages } = session;
 
-      // Handle button clicks
+      // Handle buttons
       if (interaction.isButton()) {
-        if (interaction.customId === "mineral-select-prev") page--;
-        if (interaction.customId === "mineral-select-next") page++;
+        if (interaction.customId === "mineral-prev") currentPage--;
+        if (interaction.customId === "mineral-next") currentPage++;
+        // Clamp page
+        currentPage = Math.max(0, Math.min(currentPage, pages.length - 1));
+        session.currentPage = currentPage;
       }
 
-      // Clamp page
-      page = Math.max(0, Math.min(page, session.pages.length - 1));
-      session.currentPage = page;
+      const currentData = pages[currentPage];
 
-      const currentPageData = session.pages[page];
-
+      // Build menu
       const menu = new StringSelectMenuBuilder()
           .setCustomId("mineral-select")
-          .setPlaceholder(`Select mineral (Page ${page + 1}/${session.pages.length})`)
-          .addOptions(currentPageData.map(m => ({
+          .setPlaceholder(`Select mineral (Page ${currentPage + 1}/${pages.length})`)
+          .addOptions(currentData.map(m => ({
             label: m.name,
             value: m._id.toString()
           })));
 
+      // Build buttons
       const buttons = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-              .setCustomId("mineral-select-prev")
+              .setCustomId("mineral-prev")
               .setLabel("⬅ Prev")
               .setStyle(ButtonStyle.Secondary)
-              .setDisabled(page === 0),
+              .setDisabled(currentPage === 0),
           new ButtonBuilder()
-              .setCustomId("mineral-select-next")
+              .setCustomId("mineral-next")
               .setLabel("Next ➡")
               .setStyle(ButtonStyle.Secondary)
-              .setDisabled(page === session.pages.length - 1)
+              .setDisabled(currentPage === pages.length - 1)
       );
 
       await interaction.update({
         components: [new ActionRowBuilder().addComponents(menu), buttons]
       });
-
     } catch (err) {
       console.error(err);
       if (!interaction.replied)
         await interaction.reply({ content: "Something went wrong.", ephemeral: true });
     }
-  },
+  }
 };
