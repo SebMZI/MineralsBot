@@ -75,10 +75,16 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     if (interaction.isModalSubmit()) {
-      const modal = client.modals.get(interaction.customId);
+      const modalId = interaction.customId.split(":")[0];
+
+      const modal = client.modals.get(modalId);
       if (!modal) return;
+
       await modal.execute(interaction);
-      await log(`Modal submitted: ${interaction.customId} by ${interaction.user.username}`);
+
+      await log(
+          `Modal submitted: ${interaction.customId} by ${interaction.user.username}`
+      );
     }
 
     if (interaction.isStringSelectMenu() || interaction.isButton()) {
