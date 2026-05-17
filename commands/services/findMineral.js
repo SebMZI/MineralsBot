@@ -1,72 +1,41 @@
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const Mineral = require("../../db/models/mineral");
-const log = require("../../utils/logs.js");
+import { Discord, Slash } from "discordx";
+import { CommandInteraction, ButtonStyle, EmbedBuilder } from "discord.js";
+import { Pagination } from "@discordx/pagination";
+import Mineral from "../../db/models/mineral.js";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-      .setName("findmineral")
-      .setDescription("Find who has the mineral you are looking for."),
-
-  async execute(interaction) {
-    try {
-      const minerals = await Mineral.find({ active: true });
-      if (!minerals.length) {
-        return interaction.reply({
-          content: "No minerals in the list.",
-          ephemeral: true
-        });
-      }
-
-      // Split into pages of 25
-      const pages = [];
-      for (let i = 0; i < minerals.length; i += 25) {
-        pages.push(minerals.slice(i, i + 25));
-      }
-
-      // Store in memory
-      interaction.client.mineralPages ??= new Map();
-      interaction.client.mineralPages.set(interaction.user.id, {
-        pages,
-        currentPage: 0,
-        expires: Date.now() + 5 * 60 * 1000 // 5 min
-      });
-
-      // Build first menu
-      const current = pages[0];
-      const menu = new StringSelectMenuBuilder()
-          .setCustomId("mineral-select")
-          .setPlaceholder(`Select mineral (Page 1/${pages.length})`)
-          .addOptions(current.map(m => ({
-            label: m.name,
-            value: m._id.toString()
-          })));
-
-      const buttons = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-              .setCustomId("mineral-prev")
-              .setLabel("⬅ Prev")
-              .setStyle(ButtonStyle.Secondary)
-              .setDisabled(true),
-          new ButtonBuilder()
-              .setCustomId("mineral-next")
-              .setLabel("Next ➡")
-              .setStyle(ButtonStyle.Secondary)
-              .setDisabled(pages.length <= 1)
-      );
-
-      await log(`User ${interaction.user.username} opened mineral finder`);
-
-      await interaction.reply({
-        content: "Select a mineral:",
-        ephemeral: true,
-        components: [new ActionRowBuilder().addComponents(menu), buttons]
-      });
-    } catch (e) {
-      console.error(e);
-      await log(`Error in /findmineral: ${e.message}`).catch(console.error);
-      if (!interaction.replied) {
-        await interaction.reply({ content: "An error occurred.", ephemeral: true });
-      }
+@Discord()
+export class FindMineral {
+  @Slash({ name: "findmineral", description: "Find who has the mineral you are looking for." })
+  async find(interaction) {
+    const minerals = await Mineral.find({ active: true }).populate("owners.user");
+    if (!minerals.length) {
+      await interaction.reply({ content: "No minerals in the list.", ephemeral: true });
+      return;
     }
+
+    const pages = minerals.map((m) => {
+      const ownersText = m.owners?.length
+          ? m.owners.map(o => `${o.user.username}: ${o.amount}`).join("\n")
+          : "No owners";
+      return {
+        embeds: [
+          new EmbedBuilder()
+              .setTitle(m.name)
+              .setDescription(`Mineral ID: ${m._id}`)
+              .addFields({ name: "Owners", value: ownersText })
+        ],
+      };
+    });
+
+
+    const pagination = new Pagination(interaction, pages, {
+      time: 5 * 60_000, // 5 minutes
+      buttons: {
+        backward: { style: ButtonStyle.Secondary, label: "⬅ Prev" },
+        forward: { style: ButtonStyle.Secondary, label: "Next ➡" },
+      },
+    });
+
+    await pagination.send();
   }
-};
+}
